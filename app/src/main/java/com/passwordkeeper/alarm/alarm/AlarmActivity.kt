@@ -28,11 +28,19 @@ class AlarmActivity : AppCompatActivity() {
 
         val tvTitle = findViewById<TextView>(R.id.tvAlarmTitle)
         val tvTime = findViewById<TextView>(R.id.tvAlarmTime)
+        val tvNotes = findViewById<TextView>(R.id.tvAlarmNotes)
         val btnDismiss = findViewById<Button>(R.id.btnDismiss)
         val btnSnooze = findViewById<Button>(R.id.btnSnooze)
 
         tvTitle.text = reminderTitle
         tvTime.text = reminderTime
+
+        val notes = intent.getStringExtra("REMINDER_NOTES")
+        if (!notes.isNullOrEmpty()) {
+            tvNotes.text = notes
+        } else {
+            tvNotes.text = "PasswordKeeper Alarm"
+        }
 
         btnDismiss.setOnClickListener {
             stopAlarmService()

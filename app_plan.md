@@ -38,6 +38,8 @@ flowchart TD
 4. **Vibrator Pattern**: Rhythmic pulses (`[0, 1000, 500, 1000]`) to ensure physical awareness.
 5. **Offline Support**: Alarms are scheduled directly into the Android system clock. Once synced, it rings even if your phone has zero internet connection.
 6. **Reboot Persistence (`RECEIVE_BOOT_COMPLETED`)**: Reschedules all alarms automatically if the phone reboots.
+7. **Auto-Deletion of One-Time Reminders**: As soon as a one-time reminder's scheduled date and time passes, it is automatically purged from the Cloudflare D1 database and cleaned up from local caches across both the web app and Android companion app.
+8. **Real-Time Push Synchronization (ntfy)**: Instant two-way synchronization via ntfy WebSocket / SSE. Whenever a reminder is added, updated, or removed in the web app or phone, a silent real-time ping is dispatched to instantly sync all active alarms without user intervention.
 
 ---
 

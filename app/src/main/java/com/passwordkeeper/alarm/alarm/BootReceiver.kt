@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.passwordkeeper.alarm.network.ApiClient
+import com.passwordkeeper.alarm.sync.NtfySyncManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -13,6 +14,11 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == "android.intent.action.QUICKBOOT_POWERON") {
             val prefs = context.getSharedPreferences("pk_alarm_prefs", Context.MODE_PRIVATE)
             val backendUrl = prefs.getString("backend_url", null) ?: return
+
+            val syncTopic = prefs.getString("sync_topic", null)
+            if (!syncTopic.isNullOrEmpty()) {
+                NtfySyncManager.start(context, syncTopic)
+            }
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {

@@ -3,71 +3,113 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#020617"
-    android:padding="32dp">
+    android:paddingHorizontal="28dp"
+    android:paddingTop="48dp"
+    android:paddingBottom="36dp">
 
+    <!-- Top Text Content Section -->
     <LinearLayout
+        android:id="@+id/llTopContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:gravity="center"
+        android:layout_alignParentTop="true"
+        android:gravity="center_horizontal"
         android:orientation="vertical">
 
+        <!-- Alarm Badge -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⏰ ALARM"
-            android:textColor="#10B981"
-            android:textSize="18sp"
+            android:background="@drawable/bg_badge_active"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="6dp"
+            android:text="🔔 ACTIVE ALARM"
+            android:textColor="#34D399"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
+        <!-- Large Time Display -->
         <TextView
             android:id="@+id/tvAlarmTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="24dp"
+            android:letterSpacing="0.05"
             android:text="07:30"
             android:textColor="#FFFFFF"
-            android:textSize="64sp"
+            android:textSize="72sp"
             android:textStyle="bold" />
 
+        <!-- Title Display -->
         <TextView
             android:id="@+id/tvAlarmTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="Take medicine"
-            android:textColor="#E2E8F0"
-            android:textSize="24sp"
+            android:lineSpacingExtra="4dp"
+            android:maxLines="3"
+            android:text="Take morning medication"
+            android:textColor="#F8FAFC"
+            android:textSize="28sp"
             android:textStyle="bold" />
+
+        <!-- Optional Notes / Context -->
+        <TextView
+            android:id="@+id/tvAlarmNotes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp"
+            android:text="Scheduled from PasswordKeeper"
+            android:textColor="#94A3B8"
+            android:textSize="15sp" />
 
     </LinearLayout>
 
+    <!-- Center Visual Accent -->
+    <ImageView
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_below="@id/llTopContent"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp"
+        android:alpha="0.3"
+        android:contentDescription="Alarm Icon"
+        android:src="@drawable/ic_launcher_alarm" />
+
+    <!-- Bottom Big Action Buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="vertical">
 
+        <!-- Snooze Button -->
         <Button
             android:id="@+id/btnSnooze"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:backgroundTint="#334155"
-            android:text="Snooze (10 mins)"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:layout_height="64dp"
+            android:backgroundTint="#1E293B"
+            android:elevation="0dp"
+            android:stateListAnimator="@null"
+            android:text="💤 Snooze (10 mins)"
+            android:textColor="#E2E8F0"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
+        <!-- Extra Large Dismiss Button -->
         <Button
             android:id="@+id/btnDismiss"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="#EF4444"
+            android:layout_height="80dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="#DC2626"
+            android:elevation="4dp"
             android:text="DISMISS ALARM"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
     </LinearLayout>
