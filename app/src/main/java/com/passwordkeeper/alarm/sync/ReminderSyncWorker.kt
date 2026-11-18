@@ -50,7 +50,7 @@ class ReminderSyncWorker(
             }
 
             // Ensure ntfy live sync listener is active
-            val syncTopic = prefs.getString("sync_topic", null) ?: ApiClient.fetchSyncTopic(backendUrl)
+            val syncTopic = ApiClient.fetchSyncTopic(backendUrl) ?: prefs.getString("sync_topic", null)
             if (!syncTopic.isNullOrEmpty()) {
                 prefs.edit().putString("sync_topic", syncTopic).apply()
                 NtfySyncManager.start(context, syncTopic)

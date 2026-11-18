@@ -115,6 +115,11 @@ class MainActivity : AppCompatActivity() {
             loadCachedReminders()
             tvStatus.text = "⚡ Instant push sync received! Alarms updated."
         }
+        NtfySyncManager.onConnectionStateChanged = { isConnected ->
+            if (isConnected && (tvStatus.text.isNullOrBlank() || tvStatus.text.contains("Syncing"))) {
+                tvStatus.text = "🟢 Live real-time sync connected"
+            }
+        }
 
         val savedTopic = getSavedSyncTopic()
         if (!savedTopic.isNullOrEmpty()) {
@@ -404,7 +409,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 // Ensure real-time ntfy sync listener is active
-                val topic = getSavedSyncTopic() ?: ApiClient.fetchSyncTopic(url)
+                val topic = ApiClient.fetchSyncTopic(url) ?: getSavedSyncTopic()
                 if (!topic.isNullOrEmpty()) {
                     saveSyncTopic(topic)
                     NtfySyncManager.start(this@MainActivity, topic)
