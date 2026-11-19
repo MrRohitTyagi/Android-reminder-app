@@ -47,10 +47,12 @@ class AlarmService : Service() {
             return START_NOT_STICKY
         }
 
+        val reminderId = intent?.getStringExtra("REMINDER_ID") ?: "default"
         val title = intent?.getStringExtra("REMINDER_TITLE") ?: "Alarm"
         val time = intent?.getStringExtra("REMINDER_TIME") ?: ""
+        val notes = intent?.getStringExtra("REMINDER_NOTES") ?: ""
 
-        startForeground(NOTIFICATION_ID, buildNotification(title, time))
+        startForeground(NOTIFICATION_ID, buildNotification(reminderId, title, time, notes))
         acquireWakeLock()
         playContinuousAlarm()
 
@@ -60,8 +62,11 @@ class AlarmService : Service() {
     private fun acquireWakeLock() {
         try {
             val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+            @Suppress("DEPRECATION")
             wakeLock = powerManager?.newWakeLock(
-                PowerManager.PARTIAL_WAKE_LOCK,
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
+                PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                PowerManager.ON_AFTER_RELEASE,
                 "PasswordKeeper:AlarmServiceWakeLock"
             )?.apply {
                 setReferenceCounted(false)
@@ -161,22 +166,34 @@ class AlarmService : Service() {
         }
     }
 
-    private fun buildNotification(title: String, time: String): Notification {
+    private fun buildNotification(reminderId: String, title: String, time: String, notes: String): Notification {
         val openIntent = Intent(this, AlarmActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("REMINDER_ID", reminderId)
+            putExtra("REMINDER_TITLE", title)
+            putExtra("REMINDER_TIME", time)
+            putExtra("REMINDER_NOTES", notes)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         val pendingOpen = PendingIntent.getActivity(
-            this, 0, openIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this,
+            reminderId.hashCode(),
+            openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("🔔 $title")
-            .setContentText("Alarm firing ($time)")
+            .setContentText(if (time.isNotEmpty()) "Alarm firing ($time)" else "Alarm firing")
             .setSmallIcon(R.drawable.ic_launcher_alarm)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setFullScreenIntent(pendingOpen, true)
             .setContentIntent(pendingOpen)
+            .setAutoCancel(false)
             .setOngoing(true)
             .build()
     }
@@ -190,6 +207,8 @@ class AlarmService : Service() {
             ).apply {
                 description = "Strict ringtone and vibration alarms"
                 enableVibration(true)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                setBypassDnd(true)
                 setSound(null, null) // Sound is handled directly by MediaPlayer / RingtoneManager
             }
             val manager = getSystemService(NotificationManager::class.java)

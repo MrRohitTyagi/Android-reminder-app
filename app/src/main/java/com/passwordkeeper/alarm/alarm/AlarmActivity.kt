@@ -16,31 +16,22 @@ class AlarmActivity : AppCompatActivity() {
     private lateinit var reminderId: String
     private lateinit var reminderTitle: String
     private lateinit var reminderTime: String
+    private lateinit var tvTitle: TextView
+    private lateinit var tvTime: TextView
+    private lateinit var tvNotes: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         wakeAndUnlockScreen()
+        super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_alarm)
 
-        reminderId = intent.getStringExtra("REMINDER_ID") ?: "default"
-        reminderTitle = intent.getStringExtra("REMINDER_TITLE") ?: "Reminder"
-        reminderTime = intent.getStringExtra("REMINDER_TIME") ?: ""
-
-        val tvTitle = findViewById<TextView>(R.id.tvAlarmTitle)
-        val tvTime = findViewById<TextView>(R.id.tvAlarmTime)
-        val tvNotes = findViewById<TextView>(R.id.tvAlarmNotes)
+        tvTitle = findViewById(R.id.tvAlarmTitle)
+        tvTime = findViewById(R.id.tvAlarmTime)
+        tvNotes = findViewById(R.id.tvAlarmNotes)
         val btnDismiss = findViewById<Button>(R.id.btnDismiss)
         val btnSnooze = findViewById<Button>(R.id.btnSnooze)
 
-        tvTitle.text = reminderTitle
-        tvTime.text = reminderTime
-
-        val notes = intent.getStringExtra("REMINDER_NOTES")
-        if (!notes.isNullOrEmpty()) {
-            tvNotes.text = notes
-        } else {
-            tvNotes.text = "PasswordKeeper Alarm"
-        }
+        extractAndDisplayData(intent)
 
         btnDismiss.setOnClickListener {
             stopAlarmService()
@@ -51,6 +42,42 @@ class AlarmActivity : AppCompatActivity() {
             stopAlarmService()
             AlarmScheduler.scheduleSnooze(this, reminderId, reminderTitle, reminderTime, 10)
             finish()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        wakeAndUnlockScreen()
+        extractAndDisplayData(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        wakeAndUnlockScreen()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+        )
+    }
+
+    private fun extractAndDisplayData(intent: Intent) {
+        reminderId = intent.getStringExtra("REMINDER_ID") ?: "default"
+        reminderTitle = intent.getStringExtra("REMINDER_TITLE") ?: "Reminder"
+        reminderTime = intent.getStringExtra("REMINDER_TIME") ?: ""
+
+        tvTitle.text = reminderTitle
+        tvTime.text = reminderTime
+
+        val notes = intent.getStringExtra("REMINDER_NOTES")
+        if (!notes.isNullOrEmpty()) {
+            tvNotes.text = notes
+        } else {
+            tvNotes.text = "PasswordKeeper Alarm"
         }
     }
 
@@ -76,6 +103,9 @@ class AlarmActivity : AppCompatActivity() {
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
             )
         }
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+        )
     }
 }

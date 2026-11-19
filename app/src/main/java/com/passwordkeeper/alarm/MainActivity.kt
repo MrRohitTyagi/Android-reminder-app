@@ -174,24 +174,61 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnTestAlarm.setOnClickListener {
-            val serviceIntent = Intent(this, AlarmService::class.java).apply {
-                putExtra("REMINDER_TITLE", "Test Strict Reminder")
-                putExtra("REMINDER_TIME", "Now")
-                putExtra("REMINDER_NOTES", "Testing audio & vibration")
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
+            Toast.makeText(this, "🔔 Alarm will fire in 5 seconds. Lock your phone now to test!", Toast.LENGTH_LONG).show()
 
-            val activityIntent = Intent(this, AlarmActivity::class.java).apply {
-                putExtra("REMINDER_TITLE", "Test Strict Reminder")
-                putExtra("REMINDER_TIME", "Now")
-                putExtra("REMINDER_NOTES", "Testing audio & vibration")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val testReminder = Reminder(
+                id = "test-preview-alarm",
+                title = "Test Alarm (Lockscreen Check)",
+                time = "Now",
+                recurrence = "once",
+                enabled = true,
+                notes = "Screen turns on and shows over lockscreen!"
+            )
+
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            val intent = Intent(this, AlarmReceiver::class.java).apply {
+                putExtra("REMINDER_ID", testReminder.id)
+                putExtra("REMINDER_TITLE", testReminder.title)
+                putExtra("REMINDER_TIME", testReminder.time)
+                putExtra("REMINDER_RECURRENCE", "once")
+                putExtra("REMINDER_NOTES", testReminder.notes)
             }
-            startActivity(activityIntent)
+            val pendingIntent = android.app.PendingIntent.getBroadcast(
+                this,
+                99999,
+                intent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val showIntent = Intent(this, AlarmActivity::class.java).apply {
+                putExtra("REMINDER_ID", testReminder.id)
+                putExtra("REMINDER_TITLE", testReminder.title)
+                putExtra("REMINDER_TIME", testReminder.time)
+                putExtra("REMINDER_NOTES", testReminder.notes)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+            }
+            val showPendingIntent = android.app.PendingIntent.getActivity(
+                this,
+                99998,
+                showIntent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val triggerTime = System.currentTimeMillis() + 5000L
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                alarmManager.setAlarmClock(
+                    android.app.AlarmManager.AlarmClockInfo(triggerTime, showPendingIntent),
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    android.app.AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            }
         }
     }
 
@@ -453,6 +490,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions() {
+        // Notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -461,6 +499,45 @@ class MainActivity : AppCompatActivity() {
                     arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
                     1001
                 )
+            }
+        }
+
+        // Exact Alarm permission for Android 12+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? android.app.AlarmManager
+            if (alarmManager?.canScheduleExactAlarms() == false) {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (_: Exception) {}
+            }
+        }
+
+        // Full Screen Intent permission for Android 14+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val notificationManager = getSystemService(android.app.NotificationManager::class.java)
+            if (notificationManager?.canUseFullScreenIntent() == false) {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (_: Exception) {}
+            }
+        }
+
+        // Request exemption from battery optimizations to prevent background kills
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+            if (powerManager != null && !powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (_: Exception) {}
             }
         }
     }

@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.PowerManager
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.passwordkeeper.alarm.model.Reminder
@@ -20,7 +22,22 @@ class AlarmReceiver : BroadcastReceiver() {
         val notes = intent.getStringExtra("REMINDER_NOTES") ?: ""
         val recurrence = intent.getStringExtra("REMINDER_RECURRENCE") ?: "once"
 
-        // 1. Start foreground service to play continuous ringtone & vibrate
+        // 1. Physically turn on the device screen hardware
+        try {
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+            @Suppress("DEPRECATION")
+            val wakeLock = powerManager?.newWakeLock(
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
+                PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                PowerManager.ON_AFTER_RELEASE,
+                "PasswordKeeper:AlarmReceiverWakeLock"
+            )
+            wakeLock?.acquire(10000L) // 10s to ensure AlarmActivity takes over window
+        } catch (e: Exception) {
+            Log.e("AlarmReceiver", "Failed to acquire wake lock: ${e.message}")
+        }
+
+        // 2. Start foreground service to play continuous ringtone & vibrate
         val serviceIntent = Intent(context, AlarmService::class.java).apply {
             putExtra("REMINDER_ID", reminderId)
             putExtra("REMINDER_TITLE", title)
@@ -33,15 +50,24 @@ class AlarmReceiver : BroadcastReceiver() {
             context.startService(serviceIntent)
         }
 
-        // 2. Launch full-screen wake activity on top of lockscreen
+        // 3. Launch full-screen wake activity directly on top of lockscreen
         val activityIntent = Intent(context, AlarmActivity::class.java).apply {
             putExtra("REMINDER_ID", reminderId)
             putExtra("REMINDER_TITLE", title)
             putExtra("REMINDER_TIME", time)
             putExtra("REMINDER_NOTES", notes)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
+            )
         }
-        context.startActivity(activityIntent)
+        try {
+            context.startActivity(activityIntent)
+        } catch (e: Exception) {
+            Log.e("AlarmReceiver", "Failed to start AlarmActivity directly: ${e.message}")
+        }
 
         // 3. If this was a one-time reminder, automatically delete it from DB and local cache
         if (recurrence == "once" && reminderId != "default") {
