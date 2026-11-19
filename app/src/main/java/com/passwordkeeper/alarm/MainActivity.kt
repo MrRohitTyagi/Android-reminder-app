@@ -28,6 +28,7 @@ import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.passwordkeeper.alarm.alarm.AlarmActivity
+import com.passwordkeeper.alarm.alarm.AlarmReceiver
 import com.passwordkeeper.alarm.alarm.AlarmScheduler
 import com.passwordkeeper.alarm.alarm.AlarmService
 import com.passwordkeeper.alarm.model.Reminder
